@@ -164,6 +164,48 @@ namespace DataManagement
                 return validated_rows;
             }
         }
+
+        public class DictionaryCollectionManager : BaseManager
+        {
+            [Header("Validation File")]
+            [SerializeField] private string managerName = "CollectionName";
+            [SerializeField] private TextAsset[] files;
+            [SerializeField] private string equalKey = ":";
+
+            protected new Serializers.ValidationExtension.DictionaryCollectionSerializer Serializer
+            {
+                get { return (Serializers.ValidationExtension.DictionaryCollectionSerializer)base.Serializer; }
+                set { base.Serializer = value; }
+            }
+
+            protected sealed override void Awake()
+            {
+                Serializer = new Serializers.ValidationExtension.DictionaryCollectionSerializer(managerName + "DictionaryCollection", ValidatedDictionaries());
+                Serializer.Initialize();
+            }
+
+            protected Dictionary<string, Dictionary<string, string>> ValidatedDictionaries()
+            {
+                Dictionary<string, Dictionary<string, string>> dictionaries = new Dictionary<string, Dictionary<string, string>>();
+                string[] lines;
+                string line, key;
+                foreach (TextAsset file in files)
+                {
+                    dictionaries.Add(file.name, new Dictionary<string, string>());
+                    lines = file.ToString().Replace('\r', '\n').Split('\n');
+                    foreach (string _line_ in lines)
+                    {
+                        line = _line_.Trim();
+                        if (line != "" && line[0] != '#' && line.Contains(equalKey))
+                        {
+                            key = line.Split(new string[] { equalKey }, StringSplitOptions.None)[0];
+                            dictionaries[file.name].Add(key.Trim(), line.Substring(key.Length + equalKey.Length).Trim());
+                        }
+                    }
+                }
+                return dictionaries;
+            }
+        }
     }
 
     namespace Serializers
