@@ -22,7 +22,13 @@ namespace DataManagement
             public virtual void SaveReset() { Serializer.SaveReset(); }
         }
 
-        public class VariableManager : BaseManager
+        public class NamedManager : BaseManager
+        {
+            [Header("Name")]
+            [SerializeField] protected string dataName = "Rename";
+        }
+
+        public class VariableManager : NamedManager
         {
             [Header("Validation File")]
 
@@ -36,7 +42,7 @@ namespace DataManagement
 
             protected sealed override void Awake()
             {
-                Serializer = new Serializers.ValidationExtension.VariableSerializer(file.name + "Variable", ValidatedValue());
+                Serializer = new Serializers.ValidationExtension.VariableSerializer(dataName + "Variable", ValidatedValue());
                 Serializer.Initialize();
             }
 
@@ -46,7 +52,7 @@ namespace DataManagement
             }
         }
 
-        public class DictionaryManager : BaseManager
+        public class DictionaryManager : NamedManager
         {
             [Header("Validation File")]
 
@@ -61,7 +67,7 @@ namespace DataManagement
 
             protected sealed override void Awake()
             {
-                Serializer = new Serializers.ValidationExtension.DictionarySerializer(file.name + "Dictionary", ValidatedElements());
+                Serializer = new Serializers.ValidationExtension.DictionarySerializer(dataName + "Dictionary", ValidatedElements());
                 Serializer.Initialize();
             }
 
@@ -83,7 +89,7 @@ namespace DataManagement
             }
         }
 
-        public class BooleanDictionaryManager : BaseManager
+        public class BooleanDictionaryManager : NamedManager
         {
             [Header("Validation File")]
 
@@ -97,7 +103,7 @@ namespace DataManagement
 
             protected sealed override void Awake()
             {
-                Serializer = new Serializers.ValidationExtension.DictionarySerializer(file.name + "BooleanDictionary", ValidatedElements());
+                Serializer = new Serializers.ValidationExtension.DictionarySerializer(dataName + "BooleanDictionary", ValidatedElements());
                 Serializer.Initialize();
             }
 
@@ -115,7 +121,7 @@ namespace DataManagement
             }
         }
 
-        public class TableManager : BaseManager
+        public class TableManager : NamedManager
         {
             [Header("Validation File")]
 
@@ -133,7 +139,7 @@ namespace DataManagement
 
             protected sealed override void Awake()
             {
-                Serializer = new Serializers.ValidationExtension.TableSerializer(rows.name + "Table", ValidatedFields(), ValidatedRows());
+                Serializer = new Serializers.ValidationExtension.TableSerializer(dataName + "Table", ValidatedFields(), ValidatedRows());
                 Serializer.Initialize();
             }
 
@@ -153,6 +159,7 @@ namespace DataManagement
                 }
                 return validated_fields;
             }
+
             List<string> ValidatedRows()
             {
                 List<string> validated_rows = new List<string>();
@@ -165,10 +172,9 @@ namespace DataManagement
             }
         }
 
-        public class DictionaryCollectionManager : BaseManager
+        public class DictionaryCollectionManager : NamedManager
         {
             [Header("Validation File")]
-            [SerializeField] private string managerName = "CollectionName";
             [SerializeField] private TextAsset[] files;
             [SerializeField] private string equalKey = ":";
 
@@ -180,7 +186,7 @@ namespace DataManagement
 
             protected sealed override void Awake()
             {
-                Serializer = new Serializers.ValidationExtension.DictionaryCollectionSerializer(managerName + "DictionaryCollection", ValidatedDictionaries());
+                Serializer = new Serializers.ValidationExtension.DictionaryCollectionSerializer(dataName + "DictionaryCollection", ValidatedDictionaries());
                 Serializer.Initialize();
             }
 
