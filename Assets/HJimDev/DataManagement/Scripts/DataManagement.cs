@@ -421,7 +421,10 @@ namespace DataManagement
                 data.ValidateData(fields);
             }
 
-
+            public bool FieldExists(string field)
+            {
+                return data.FieldExists(field);
+            }
 
             public List<string> GetFields()
             {
@@ -431,6 +434,11 @@ namespace DataManagement
             public List<string> GetRows()
             {
                 return data.GetRows();
+            }
+
+            public bool RowExists(string row)
+            {
+                return data.RowExists(row);
             }
 
             public void SetData(string row, string field, string value)
@@ -490,6 +498,16 @@ namespace DataManagement
             protected override void CheckDataConsistensy()
             {
                 data.ValidateData(dictionaries);
+            }
+
+            public bool DictionaryExists(string dictionary)
+            {
+                return data.DictionaryExists(dictionary);
+            }
+
+            public bool DataExists(string dictionary, string id)
+            {
+                return data.DataExists(dictionary, id);
             }
 
             public List<string> GetDictionaries()
@@ -907,6 +925,20 @@ namespace DataManagement
                 return Value.ToString();
             }
         }
+
+        [System.Serializable]
+        public struct TextAsset
+        {
+            public string name;
+            public UnityEngine.TextAsset file;
+
+            public override string ToString()
+            {
+                return name;
+            }
+        }
+
+            
     }
 
     namespace Exceptions
