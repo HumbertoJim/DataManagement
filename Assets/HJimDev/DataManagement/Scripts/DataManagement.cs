@@ -218,6 +218,7 @@ namespace DataManagement
     {
         public class BaseSerializer
         {
+            public bool Ready { get; protected set; }
             protected virtual void CheckDataConsistensy() { throw new NotImplementedException(); }
 
             public virtual void SaveData() { throw new NotImplementedException(); }
@@ -233,7 +234,6 @@ namespace DataManagement
             private Structs.CoreAttribute<string> filePath;
             private BinaryFormatter bf;
             protected T data;
-
 
             public BaseSerializer(string name)
             {
@@ -253,6 +253,7 @@ namespace DataManagement
                 else data = Deserialize();
                 CheckDataConsistensy();
                 SaveData();
+                Ready = true;
             }
 
             public sealed override void SaveData()
@@ -729,6 +730,7 @@ namespace DataManagement
             }
         }
 
+        [Serializable]
         public class Table
         {
             Dictionary<string, Dictionary<string, string>> data; // each element represents a row, and a row correspond to a field (field-value)
@@ -821,6 +823,7 @@ namespace DataManagement
             }
         }
 
+        [Serializable]
         public class DictionaryCollection
         {
             Dictionary<string, Dictionary<string, string>> data; // data[dictionary_id][data_id] = value;
@@ -927,10 +930,10 @@ namespace DataManagement
         }
 
         [System.Serializable]
-        public struct TextAsset
+        public struct Document
         {
             public string name;
-            public UnityEngine.TextAsset file;
+            public TextAsset file;
 
             public override string ToString()
             {
