@@ -4,6 +4,9 @@ using UnityEngine;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.IO;
 using System;
+using System.Linq;
+using System.Text;
+using System.Security.Cryptography;
 
 namespace DataManagement
 {
@@ -19,7 +22,11 @@ namespace DataManagement
 
             public virtual void ResetData() { Serializer.ResetData(); }
 
-            public virtual void SaveReset() { Serializer.SaveReset(); }
+            public byte[] ComputeHash(byte[] source)
+            {
+                using SHA256 sha256 = SHA256.Create();
+                return sha256.ComputeHash(source);
+            }
         }
 
         public class NamedManager : BaseManager
@@ -42,8 +49,14 @@ namespace DataManagement
 
             protected sealed override void Awake()
             {
-                Serializer = new Serializers.ValidationExtension.VariableSerializer(dataName + "Variable", ValidatedValue());
+                Serializer = new Serializers.ValidationExtension.VariableSerializer(dataName + "Variable");
                 Serializer.Initialize();
+                byte[] hash = ComputeHash(file.bytes);
+                if (!Serializer.CompareHash(hash))
+                {
+                    Serializer.CheckDataConsistensy(hash);
+                    SaveData();
+                }
             }
 
             protected string ValidatedValue()
@@ -67,8 +80,14 @@ namespace DataManagement
 
             protected sealed override void Awake()
             {
-                Serializer = new Serializers.ValidationExtension.DictionarySerializer(dataName + "Dictionary", ValidatedElements());
+                Serializer = new Serializers.ValidationExtension.DictionarySerializer(dataName + "Dictionary");
                 Serializer.Initialize();
+                byte[] hash = ComputeHash(file.bytes);
+                if (!Serializer.CompareHash(hash))
+                {
+                    Serializer.CheckDataConsistensy(hash, ValidatedElements());
+                    SaveData();
+                }
             }
 
             protected Dictionary<string, string> ValidatedElements()
@@ -103,8 +122,14 @@ namespace DataManagement
 
             protected sealed override void Awake()
             {
-                Serializer = new Serializers.ValidationExtension.DictionarySerializer(dataName + "BooleanDictionary", ValidatedElements());
+                Serializer = new Serializers.ValidationExtension.DictionarySerializer(dataName + "BooleanDictionary");
                 Serializer.Initialize();
+                byte[] hash = ComputeHash(file.bytes);
+                if (!Serializer.CompareHash(hash))
+                {
+                    Serializer.CheckDataConsistensy(hash, ValidatedElements());
+                    SaveData();
+                }
             }
 
             protected Dictionary<string, string> ValidatedElements()
@@ -139,8 +164,14 @@ namespace DataManagement
 
             protected sealed override void Awake()
             {
-                Serializer = new Serializers.ValidationExtension.TableSerializer(dataName + "Table", ValidatedFields(), ValidatedRows());
+                Serializer = new Serializers.ValidationExtension.TableSerializer(dataName + "Table");
                 Serializer.Initialize();
+                byte[] hash = ComputeHash(fields.bytes).Concat(ComputeHash(rows.bytes)).ToArray();
+                if (!Serializer.CompareHash(hash))
+                {
+                    Serializer.CheckDataConsistensy(hash, ValidatedFields(), ValidatedRows());
+                    SaveData();
+                }
             }
 
             protected Dictionary<string, string> ValidatedFields()
@@ -186,8 +217,18 @@ namespace DataManagement
 
             protected sealed override void Awake()
             {
-                Serializer = new Serializers.ValidationExtension.DictionaryCollectionSerializer(dataName + "DictionaryCollection", ValidatedDictionaries());
+                Serializer = new Serializers.ValidationExtension.DictionaryCollectionSerializer(dataName + "DictionaryCollection");
                 Serializer.Initialize();
+                byte[] hash = new byte[] { };
+                foreach(TextAsset file in files)
+                {
+                    hash = hash.Concat(ComputeHash(file.bytes)).ToArray();
+                }
+                if (!Serializer.CompareHash(hash))
+                {
+                    Serializer.CheckDataConsistensy(hash, ValidatedDictionaries());
+                    SaveData();
+                }
             }
 
             protected Dictionary<string, Dictionary<string, string>> ValidatedDictionaries()
@@ -219,16 +260,14 @@ namespace DataManagement
         public class BaseSerializer
         {
             public bool Ready { get; protected set; }
-            protected virtual void CheckDataConsistensy() { throw new NotImplementedException(); }
+            public bool Created { get; protected set; }
 
             public virtual void SaveData() { throw new NotImplementedException(); }
 
             public virtual void ResetData() { throw new NotImplementedException(); }
-
-            public void SaveReset() { ResetData(); CheckDataConsistensy(); SaveData(); }
         }
 
-        public class BaseSerializer<T> : BaseSerializer
+        public class BaseSerializer<T> : BaseSerializer where T : Serializable.BaseSerializable
         {
             private Structs.CoreAttribute<string> name;
             private Structs.CoreAttribute<string> filePath;
@@ -248,11 +287,21 @@ namespace DataManagement
                 {
                     Debug.Log("A new " + name + "Data file will be made");
                     ResetData();
-                    SaveData();
+                    Created = true;
                 }
-                else data = Deserialize();
-                CheckDataConsistensy();
-                SaveData();
+                else
+                {
+                    try
+                    {
+                        data = Deserialize();
+                        if (data.CheckConsistensy()) SaveData();
+                    }
+                    catch
+                    {
+                        Debug.Log("A new " + name + "Data file will be made due to serialization errors");
+                        ResetData();
+                    }
+                }
                 Ready = true;
             }
 
@@ -263,14 +312,15 @@ namespace DataManagement
 
             protected void ResetData(T data)
             {
-                FileStream file = File.Create(filePath.Value);
-                file.Close();
+                using (FileStream file = File.Create(filePath.Value)) file.Close();
                 this.data = data;
+                this.data.CheckConsistensy();
+                SaveData();
             }
 
             private T Deserialize()
             {
-                FileStream file = File.Open(filePath.Value, FileMode.Open);
+                using FileStream file = File.Open(filePath.Value, FileMode.Open);
                 T data = (T)bf.Deserialize(file);
                 file.Close();
                 return data;
@@ -278,20 +328,25 @@ namespace DataManagement
 
             private void Serialize(T data)
             {
-                FileStream file = File.Open(filePath.Value, FileMode.Open);
+                using FileStream file = File.Open(filePath.Value, FileMode.Open);
                 bf.Serialize(file, data);
                 file.Close();
+            }
+
+            public bool CompareHash(byte[] hash)
+            {
+                return data.CompareHash(hash);
+            }
+
+            public void CheckDataConsistensy(byte[] hash)
+            {
+                data.SetHash(hash);
             }
         }
 
         public class VariableSerializer : BaseSerializer<Serializable.Variable>
         {
             public VariableSerializer(string name) : base(name) { }
-
-            protected override void CheckDataConsistensy()
-            {
-                data.ValidateData();
-            }
 
             public sealed override void ResetData()
             {
@@ -341,11 +396,6 @@ namespace DataManagement
         public class DictionarySerializer : BaseSerializer<Serializable.Dictionary>
         {
             public DictionarySerializer(string name) : base(name) { }
-
-            protected override void CheckDataConsistensy()
-            {
-                data.ValidateData();
-            }
 
             public sealed override void ResetData()
             {
@@ -404,12 +454,7 @@ namespace DataManagement
 
         public class TableSerializer : BaseSerializer<Serializable.Table>
         {
-            private readonly Dictionary<string, string> fields;
-
-            public TableSerializer(string name, Dictionary<string, string> fields) : base(name)
-            {
-                this.fields = new Dictionary<string, string>(fields);
-            }
+            public TableSerializer(string name) : base(name) { }
 
             public sealed override void ResetData()
             {
@@ -417,9 +462,10 @@ namespace DataManagement
                 ResetData(data);
             }
 
-            protected override void CheckDataConsistensy()
+            public void CheckDataConsistensy(byte[] hash, Dictionary<string, string> fields)
             {
-                data.ValidateData(fields);
+                CheckDataConsistensy(hash);
+                data.CheckDataConsistensy(fields);
             }
 
             public bool FieldExists(string field)
@@ -483,12 +529,7 @@ namespace DataManagement
 
         public class DictionaryCollectionSerializer : BaseSerializer<Serializable.DictionaryCollection>
         {
-            private readonly List<string> dictionaries;
-
-            public DictionaryCollectionSerializer(string name, List<string> dictionaries) : base(name)
-            {
-                this.dictionaries = new List<string>(dictionaries);
-            }
+            public DictionaryCollectionSerializer(string name) : base(name) { }
 
             public sealed override void ResetData()
             {
@@ -496,9 +537,10 @@ namespace DataManagement
                 ResetData(data);
             }
 
-            protected override void CheckDataConsistensy()
+            public void CheckDataConsistensy(byte[] hash, List<string> dictionaries)
             {
-                data.ValidateData(dictionaries);
+                CheckDataConsistensy(hash);
+                data.CheckDataConsistensy(dictionaries);
             }
 
             public bool DictionaryExists(string dictionary)
@@ -564,18 +606,12 @@ namespace DataManagement
         {
             public class VariableSerializer : Serializers.VariableSerializer
             {
-                private readonly string validated_value;
+                public VariableSerializer(string name) : base(name) { }
 
-                public VariableSerializer(string name, string validated_value) : base(name)
+                public void CheckDataConsistensy(byte[] hash, string validated_value)
                 {
-                    this.validated_value = validated_value;
-                }
-
-                protected sealed override void CheckDataConsistensy()
-                {
-                    base.CheckDataConsistensy();
-
-                    if(data.Get() == "")
+                    CheckDataConsistensy(hash);
+                    if (data.Get() == "")
                     {
                         data.Set(validated_value);
                     }
@@ -584,17 +620,11 @@ namespace DataManagement
 
             public class DictionarySerializer : Serializers.DictionarySerializer
             {
-                private readonly Dictionary<string, string> validated_elements;
+                public DictionarySerializer(string name) : base(name) { }
 
-                public DictionarySerializer(string name, Dictionary<string, string> validated_elements) : base(name)
+                public void CheckDataConsistensy(byte[] hash, Dictionary<string, string> validated_elements)
                 {
-                    this.validated_elements = validated_elements;
-                }
-
-                protected sealed override void CheckDataConsistensy()
-                {
-                    base.CheckDataConsistensy();
-
+                    CheckDataConsistensy(hash);
                     // remove keys that does not belong to validated data
                     List<string> currentKeys = data.GetKeys();
                     foreach (string key in currentKeys)
@@ -612,16 +642,11 @@ namespace DataManagement
 
             public class TableSerializer : Serializers.TableSerializer
             {
-                private readonly List<string> validated_rows;
+                public TableSerializer(string name) : base(name) { }
 
-                public TableSerializer(string name, Dictionary<string, string> validated_fields, List<string> validated_rows) : base(name, validated_fields)
+                public void CheckDataConsistensy(byte[] hash, Dictionary<string, string> validated_fields, List<string> validated_rows)
                 {
-                    this.validated_rows = validated_rows;
-                }
-
-                protected sealed override void CheckDataConsistensy()
-                {
-                    base.CheckDataConsistensy();
+                    CheckDataConsistensy(hash, validated_fields);
 
                     // remove rows that does not belong to validated data
                     List<string> rows = data.GetRows();
@@ -642,14 +667,11 @@ namespace DataManagement
             {
                 private readonly Dictionary<string, Dictionary<string, string>> validated_dictionaries;
 
-                public DictionaryCollectionSerializer(string name, Dictionary<string, Dictionary<string, string>> validated_dictionaries) : base(name, new List<string>(validated_dictionaries.Keys))
-                {
-                    this.validated_dictionaries = validated_dictionaries;
-                }
+                public DictionaryCollectionSerializer(string name) : base(name) { }
 
-                protected sealed override void CheckDataConsistensy()
+                public void CheckDataConsistensy(byte[] hash, Dictionary<string, Dictionary<string, string>> validated_dictionaries)
                 {
-                    base.CheckDataConsistensy();
+                    CheckDataConsistensy(hash, new List<string>(validated_dictionaries.Keys));
 
                     foreach (string dictionary in validated_dictionaries.Keys)
                     {
@@ -674,13 +696,45 @@ namespace DataManagement
     namespace Serializable
     {
         [Serializable]
-        public class Variable
+        public class BaseSerializable
+        {
+            public byte[] hash;
+
+            public virtual bool CheckConsistensy()
+            {
+                if( hash == null)
+                {
+                    hash = new byte[] { };
+                    return false;
+                }
+                return false;
+            }
+
+            public bool CompareHash(byte[] hash)
+            {
+                return this.hash.SequenceEqual(hash);
+            }
+
+            public void SetHash(byte[] hash)
+            {
+                this.hash = hash;
+            }
+        }
+
+        [Serializable]
+        public class Variable: BaseSerializable
         {
             public string data;
 
-            public void ValidateData()
+            public override bool CheckConsistensy()
             {
-                if (data == null) data = "";
+                bool consistensy = base.CheckConsistensy();
+                if( data == null )
+                {
+                    data = "";
+                    consistensy = false;
+                }
+                return consistensy;
             }
 
             public void Set(string value)
@@ -695,13 +749,19 @@ namespace DataManagement
         }
 
         [Serializable]
-        public class Dictionary
+        public class Dictionary: BaseSerializable
         {
             public Dictionary<string, string> data;
 
-            public void ValidateData()
+            public override bool CheckConsistensy()
             {
-                if (data == null) data = new Dictionary<string, string>();
+                bool consistensy = base.CheckConsistensy();
+                if (data == null)
+                {
+                    data = new Dictionary<string, string>();
+                    consistensy = false;
+                }
+                return consistensy;
             }
 
             public bool DataExists(string key)
@@ -731,15 +791,32 @@ namespace DataManagement
         }
 
         [Serializable]
-        public class Table
+        public class Table: BaseSerializable
         {
             Dictionary<string, Dictionary<string, string>> data; // each element represents a row, and a row correspond to a field (field-value)
             Dictionary<string, string> fields; // each element represents a dictionaries with its defaul value
 
-            public void ValidateData()
+            public override bool CheckConsistensy()
             {
-                if (fields == null) fields = new Dictionary<string, string>();
-                if (data == null) data = new Dictionary<string, Dictionary<string, string>>();
+                bool consistensy = base.CheckConsistensy();
+                if (fields == null)
+                {
+                    fields = new Dictionary<string, string>();
+                    data = new Dictionary<string, Dictionary<string, string>>();
+                    consistensy = false;
+                }
+                if (data == null)
+                {
+                    data = new Dictionary<string, Dictionary<string, string>>();
+                    consistensy = false;
+                }
+                return consistensy;
+            }
+
+            public void CheckDataConsistensy(Dictionary<string, string> fields)
+            {
+                this.fields = fields;
+
                 foreach (string row in data.Keys)
                 {
                     List<string> rowDictionarys = new List<string>(data[row].Keys);
@@ -753,12 +830,6 @@ namespace DataManagement
                         if (!data[row].ContainsKey(field)) data[row].Add(field, fields[field]);
                     }
                 }
-            }
-
-            public void ValidateData(Dictionary<string, string> fields)
-            {
-                this.fields = fields;
-                ValidateData();
             }
 
             public bool FieldExists(string field)
@@ -824,16 +895,31 @@ namespace DataManagement
         }
 
         [Serializable]
-        public class DictionaryCollection
+        public class DictionaryCollection: BaseSerializable
         {
             Dictionary<string, Dictionary<string, string>> data; // data[dictionary_id][data_id] = value;
             List<string> dictionaries;
 
-            public void Validate()
+            public override bool CheckConsistensy()
             {
-                if (data == null) data = new Dictionary<string, Dictionary<string, string>>();
-                if (dictionaries == null) dictionaries = new List<string>();
+                bool consistensy = base.CheckConsistensy();
+                if (dictionaries == null)
+                {
+                    dictionaries = new List<string>();
+                    data = new Dictionary<string, Dictionary<string, string>>();
+                    consistensy = false;
+                }
+                if (data == null)
+                {
+                    data = new Dictionary<string, Dictionary<string, string>>();
+                    consistensy = false;
+                }
+                return consistensy;
+            }
 
+            public void CheckDataConsistensy(List<string> dictionaries)
+            {
+                this.dictionaries = dictionaries;
                 List<string> currentDictionaries = new List<string>(data.Keys);
                 foreach (string dictionary in currentDictionaries)
                 {
@@ -843,12 +929,6 @@ namespace DataManagement
                 {
                     if (!data.ContainsKey(dictionary)) data.Add(dictionary, new Dictionary<string, string>());
                 }
-            }
-
-            public void ValidateData(List<string> dictionaries)
-            {
-                this.dictionaries = dictionaries;
-                Validate();
             }
 
             public List<string> GetDictionaries()

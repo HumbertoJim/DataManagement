@@ -45,14 +45,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1a17def4105e9624790dfa7098b185b2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  versionFile: {fileID: 11400000, guid: 2f4475c92315bd942b7727307ce70e36, type: 2}
-  onStartExecuteList: []
   onSaveExecuteList:
   - {fileID: 7593951027742621523}
   - {fileID: 4004754645418735064}
   onResetExecuteList:
   - {fileID: 4004754645418735064}
-  resetOnStart: 0
+  resetAllOnStart: 0
 --- !u!1001 &5749003021498775873
 PrefabInstance:
   m_ObjectHideFlags: 0
