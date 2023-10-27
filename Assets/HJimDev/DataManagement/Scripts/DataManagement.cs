@@ -5,7 +5,6 @@ using System.Runtime.Serialization.Formatters.Binary;
 using System.IO;
 using System;
 using System.Linq;
-using System.Text;
 using System.Security.Cryptography;
 
 namespace DataManagement
@@ -665,8 +664,6 @@ namespace DataManagement
 
             public class DictionaryCollectionSerializer : Serializers.DictionaryCollectionSerializer
             {
-                private readonly Dictionary<string, Dictionary<string, string>> validated_dictionaries;
-
                 public DictionaryCollectionSerializer(string name) : base(name) { }
 
                 public void CheckDataConsistensy(byte[] hash, Dictionary<string, Dictionary<string, string>> validated_dictionaries)
