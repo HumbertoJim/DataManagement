@@ -48,7 +48,7 @@ namespace DataManagement
 
             protected sealed override void Awake()
             {
-                Serializer = new Serializers.ValidationExtension.VariableSerializer(dataName + "Variable");
+                Serializer = new Serializers.ValidationExtension.VariableSerializer(dataName);
                 Serializer.Initialize();
                 byte[] hash = ComputeHash(file.bytes);
                 if (!Serializer.CompareHash(hash))
@@ -79,7 +79,7 @@ namespace DataManagement
 
             protected sealed override void Awake()
             {
-                Serializer = new Serializers.ValidationExtension.DictionarySerializer(dataName + "Dictionary");
+                Serializer = new Serializers.ValidationExtension.DictionarySerializer(dataName);
                 Serializer.Initialize();
                 byte[] hash = ComputeHash(file.bytes);
                 if (!Serializer.CompareHash(hash))
@@ -121,7 +121,7 @@ namespace DataManagement
 
             protected sealed override void Awake()
             {
-                Serializer = new Serializers.ValidationExtension.DictionarySerializer(dataName + "BooleanDictionary");
+                Serializer = new Serializers.ValidationExtension.DictionarySerializer(dataName + "Boolean");
                 Serializer.Initialize();
                 byte[] hash = ComputeHash(file.bytes);
                 if (!Serializer.CompareHash(hash))
@@ -163,7 +163,7 @@ namespace DataManagement
 
             protected sealed override void Awake()
             {
-                Serializer = new Serializers.ValidationExtension.TableSerializer(dataName + "Table");
+                Serializer = new Serializers.ValidationExtension.TableSerializer(dataName);
                 Serializer.Initialize();
                 byte[] hash = ComputeHash(fields.bytes).Concat(ComputeHash(rows.bytes)).ToArray();
                 if (!Serializer.CompareHash(hash))
@@ -216,7 +216,7 @@ namespace DataManagement
 
             protected sealed override void Awake()
             {
-                Serializer = new Serializers.ValidationExtension.DictionaryCollectionSerializer(dataName + "DictionaryCollection");
+                Serializer = new Serializers.ValidationExtension.DictionaryCollectionSerializer(dataName);
                 Serializer.Initialize();
                 byte[] hash = new byte[] { };
                 foreach(TextAsset file in files)
@@ -266,7 +266,7 @@ namespace DataManagement
             public virtual void ResetData() { throw new NotImplementedException(); }
         }
 
-        public class BaseSerializer<T> : BaseSerializer where T : Serializable.BaseSerializable
+        public class BaseSerializer<T> : BaseSerializer where T : Serializables.BaseSerializable
         {
             private Structs.CoreAttribute<string> name;
             private Structs.CoreAttribute<string> filePath;
@@ -343,13 +343,13 @@ namespace DataManagement
             }
         }
 
-        public class VariableSerializer : BaseSerializer<Serializable.Variable>
+        public class VariableSerializer : BaseSerializer<Serializables.Variable>
         {
             public VariableSerializer(string name) : base(name) { }
 
             public sealed override void ResetData()
             {
-                data = new Serializable.Variable();
+                data = new Serializables.Variable();
                 ResetData(data);
             }
 
@@ -392,13 +392,13 @@ namespace DataManagement
             }
         }
 
-        public class DictionarySerializer : BaseSerializer<Serializable.Dictionary>
+        public class DictionarySerializer : BaseSerializer<Serializables.Dictionary>
         {
             public DictionarySerializer(string name) : base(name) { }
 
             public sealed override void ResetData()
             {
-                data = new Serializable.Dictionary();
+                data = new Serializables.Dictionary();
                 ResetData(data);
             }
 
@@ -451,13 +451,13 @@ namespace DataManagement
             }
         }
 
-        public class TableSerializer : BaseSerializer<Serializable.Table>
+        public class TableSerializer : BaseSerializer<Serializables.Table>
         {
             public TableSerializer(string name) : base(name) { }
 
             public sealed override void ResetData()
             {
-                data = new Serializable.Table();
+                data = new Serializables.Table();
                 ResetData(data);
             }
 
@@ -526,13 +526,13 @@ namespace DataManagement
             }
         }
 
-        public class DictionaryCollectionSerializer : BaseSerializer<Serializable.DictionaryCollection>
+        public class DictionaryCollectionSerializer : BaseSerializer<Serializables.DictionaryCollection>
         {
             public DictionaryCollectionSerializer(string name) : base(name) { }
 
             public sealed override void ResetData()
             {
-                data = new Serializable.DictionaryCollection();
+                data = new Serializables.DictionaryCollection();
                 ResetData(data);
             }
 
@@ -605,7 +605,7 @@ namespace DataManagement
         {
             public class VariableSerializer : Serializers.VariableSerializer
             {
-                public VariableSerializer(string name) : base(name) { }
+                public VariableSerializer(string name) : base(name + "Variable") { }
 
                 public void CheckDataConsistensy(byte[] hash, string validated_value)
                 {
@@ -619,7 +619,7 @@ namespace DataManagement
 
             public class DictionarySerializer : Serializers.DictionarySerializer
             {
-                public DictionarySerializer(string name) : base(name) { }
+                public DictionarySerializer(string name) : base(name + "Dictionary") { }
 
                 public void CheckDataConsistensy(byte[] hash, Dictionary<string, string> validated_elements)
                 {
@@ -641,7 +641,7 @@ namespace DataManagement
 
             public class TableSerializer : Serializers.TableSerializer
             {
-                public TableSerializer(string name) : base(name) { }
+                public TableSerializer(string name) : base(name + "Table") { }
 
                 public void CheckDataConsistensy(byte[] hash, Dictionary<string, string> validated_fields, List<string> validated_rows)
                 {
@@ -664,7 +664,7 @@ namespace DataManagement
 
             public class DictionaryCollectionSerializer : Serializers.DictionaryCollectionSerializer
             {
-                public DictionaryCollectionSerializer(string name) : base(name) { }
+                public DictionaryCollectionSerializer(string name) : base(name + "DictionaryCollection") { }
 
                 public void CheckDataConsistensy(byte[] hash, Dictionary<string, Dictionary<string, string>> validated_dictionaries)
                 {
@@ -690,7 +690,7 @@ namespace DataManagement
         }
     }
 
-    namespace Serializable
+    namespace Serializables
     {
         [Serializable]
         public class BaseSerializable
