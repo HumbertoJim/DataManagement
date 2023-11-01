@@ -28,13 +28,7 @@ namespace DataManagement
             }
         }
 
-        public class NamedManager : BaseManager
-        {
-            [Header("Name")]
-            [SerializeField] protected string dataName = "Rename";
-        }
-
-        public class VariableManager : NamedManager
+        public class VariableManager : BaseManager
         {
             [Header("Validation File")]
 
@@ -46,7 +40,7 @@ namespace DataManagement
                 set { base.Serializer = value; }
             }
 
-            protected sealed override void Awake()
+            protected void Awake(string dataName)
             {
                 Serializer = new Serializers.ValidationExtension.VariableSerializer(dataName);
                 Serializer.Initialize();
@@ -64,7 +58,7 @@ namespace DataManagement
             }
         }
 
-        public class DictionaryManager : NamedManager
+        public class DictionaryManager : BaseManager
         {
             [Header("Validation File")]
 
@@ -77,7 +71,7 @@ namespace DataManagement
                 set { base.Serializer = value; }
             }
 
-            protected sealed override void Awake()
+            protected void Awake(string dataName)
             {
                 Serializer = new Serializers.ValidationExtension.DictionarySerializer(dataName);
                 Serializer.Initialize();
@@ -107,7 +101,7 @@ namespace DataManagement
             }
         }
 
-        public class BooleanDictionaryManager : NamedManager
+        public class BooleanDictionaryManager : BaseManager
         {
             [Header("Validation File")]
 
@@ -119,7 +113,7 @@ namespace DataManagement
                 set { base.Serializer = value; }
             }
 
-            protected sealed override void Awake()
+            protected void Awake(string dataName)
             {
                 Serializer = new Serializers.ValidationExtension.DictionarySerializer(dataName + "Boolean");
                 Serializer.Initialize();
@@ -145,7 +139,7 @@ namespace DataManagement
             }
         }
 
-        public class TableManager : NamedManager
+        public class TableManager : BaseManager
         {
             [Header("Validation File")]
 
@@ -161,7 +155,7 @@ namespace DataManagement
                 set { base.Serializer = value; }
             }
 
-            protected sealed override void Awake()
+            protected void Awake(string dataName)
             {
                 Serializer = new Serializers.ValidationExtension.TableSerializer(dataName);
                 Serializer.Initialize();
@@ -202,7 +196,7 @@ namespace DataManagement
             }
         }
 
-        public class DictionaryCollectionManager : NamedManager
+        public class DictionaryCollectionManager : BaseManager
         {
             [Header("Validation File")]
             [SerializeField] private TextAsset[] files;
@@ -214,7 +208,7 @@ namespace DataManagement
                 set { base.Serializer = value; }
             }
 
-            protected sealed override void Awake()
+            protected void Awake(string dataName)
             {
                 Serializer = new Serializers.ValidationExtension.DictionaryCollectionSerializer(dataName);
                 Serializer.Initialize();
@@ -345,7 +339,7 @@ namespace DataManagement
 
         public class VariableSerializer : BaseSerializer<Serializables.Variable>
         {
-            public VariableSerializer(string name) : base(name) { }
+            public VariableSerializer(string name) : base(name + "Variable") { }
 
             public sealed override void ResetData()
             {
@@ -358,22 +352,24 @@ namespace DataManagement
                 data.Set(value);
             }
 
+            public void Set(int value)
+            {
+                Set(value.ToString());
+            }
+
+            public void Set(float value)
+            {
+                Set(value.ToString());
+            }
+
+            public void Set(bool value)
+            {
+                Set(value ? "true" : "false");
+            }
+
             public string Get()
             {
                 return data.Get();
-            }
-
-            public void SetAsInt(string value)
-            {
-                try
-                {
-                    int.Parse(value);
-                    Set(value);
-                }
-                catch
-                {
-                    Debug.Log("Unable to save data because can not parse to int: " + value);
-                }
             }
 
             public int GetAsInt()
@@ -381,9 +377,9 @@ namespace DataManagement
                 return int.Parse(Get());
             }
 
-            public void SetAsBool(string value)
+            public float GetAsFloat()
             {
-                Set(value.Trim().ToLower() == "true" ? "true" : "false");
+                return float.Parse(Get());
             }
 
             public bool GetAsBool()
@@ -394,7 +390,7 @@ namespace DataManagement
 
         public class DictionarySerializer : BaseSerializer<Serializables.Dictionary>
         {
-            public DictionarySerializer(string name) : base(name) { }
+            public DictionarySerializer(string name) : base(name + "Dictionary") { }
 
             public sealed override void ResetData()
             {
@@ -417,22 +413,24 @@ namespace DataManagement
                 data.SetData(id, value);
             }
 
+            public void SetData(string id, int value)
+            {
+                SetData(id, value.ToString());
+            }
+
+            public void SetData(string id, float value)
+            {
+                SetData(id, value.ToString());
+            }
+
+            public void SetData(string id, bool value)
+            {
+                SetData(id, value ? "true" : "false");
+            }
+
             public string GetData(string id)
             {
                 return data.GetData(id);
-            }
-
-            public void SetDataAsInt(string id, string value)
-            {
-                try
-                {
-                    int.Parse(value);
-                    SetData(id, value);
-                }
-                catch
-                {
-                    Debug.Log("Unable to save data because can not parse to int: " + id + " = " + value);
-                }
             }
 
             public int GetDataAsInt(string id)
@@ -440,9 +438,9 @@ namespace DataManagement
                 return int.Parse(GetData(id));
             }
 
-            public void SetDataAsBool(string id, string value)
+            public float GetDataAsFloat(string id)
             {
-                SetData(id, value.Trim().ToLower() == "true" ? "true" : "false");
+                return float.Parse(GetData(id));
             }
 
             public bool GetDataAsBool(string id)
@@ -453,7 +451,7 @@ namespace DataManagement
 
         public class TableSerializer : BaseSerializer<Serializables.Table>
         {
-            public TableSerializer(string name) : base(name) { }
+            public TableSerializer(string name) : base(name + "Table") { }
 
             public sealed override void ResetData()
             {
@@ -492,22 +490,24 @@ namespace DataManagement
                 data.SetData(row, field, value);
             }
 
+            public void SetData(string row, string field, int value)
+            {
+                SetData(row, field, value.ToString());
+            }
+
+            public void SetData(string row, string field, float value)
+            {
+                SetData(row, field, value.ToString());
+            }
+
+            public void SetData(string row, string field, bool value)
+            {
+                SetData(row, field, value ? "true" : "false");
+            }
+
             public string GetData(string row, string field)
             {
                 return data.GetData(row, field);
-            }
-
-            public void SetDataAsInt(string row, string field, string value)
-            {
-                try
-                {
-                    int.Parse(value);
-                    SetData(row, field, value);
-                }
-                catch
-                {
-                    Debug.Log("Unable to save data because can not parse to int: " + row + " = " + value);
-                }
             }
 
             public int GetDataAsInt(string row, string field)
@@ -515,9 +515,9 @@ namespace DataManagement
                 return int.Parse(GetData(row, field));
             }
 
-            public void SetDataAsBool(string row, string field, string value)
+            public float GetDataAsFloat(string row, string field)
             {
-                SetData(row, field, value.Trim().ToLower() == "true" ? "true" : "false");
+                return float.Parse(GetData(row, field));
             }
 
             public bool GetDataAsBool(string row, string field)
@@ -528,7 +528,7 @@ namespace DataManagement
 
         public class DictionaryCollectionSerializer : BaseSerializer<Serializables.DictionaryCollection>
         {
-            public DictionaryCollectionSerializer(string name) : base(name) { }
+            public DictionaryCollectionSerializer(string name) : base(name + "DictionaryCollection") { }
 
             public sealed override void ResetData()
             {
@@ -567,22 +567,24 @@ namespace DataManagement
                 data.SetData(dictionary, id, value);
             }
 
+            public void SetData(string dictionary, string id, int value)
+            {
+                SetData(dictionary, id, value.ToString());
+            }
+
+            public void SetData(string dictionary, string id, float value)
+            {
+                SetData(dictionary, id, value.ToString());
+            }
+
+            public void SetData(string dictionary, string id, bool value)
+            {
+                SetData(dictionary, id, value ? "true" : "false");
+            }
+
             public string GetData(string dictionary, string id)
             {
                 return data.GetData(dictionary, id);
-            }
-
-            public void SetDataAsInt(string dictionary, string id, string value)
-            {
-                try
-                {
-                    int.Parse(value);
-                    SetData(dictionary, id, value);
-                }
-                catch
-                {
-                    Debug.Log("Unable to save data because can not parse to int: " + id + " = " + value);
-                }
             }
 
             public int GetDataAsInt(string dictionary, string id)
@@ -590,9 +592,9 @@ namespace DataManagement
                 return int.Parse(GetData(dictionary, id));
             }
 
-            public void SetDataAsBool(string dictionary, string id, string value)
+            public float GetDataAsFloat(string dictionary, string id)
             {
-                SetData(dictionary, id, value.Trim().ToLower() == "true" ? "true" : "false");
+                return float.Parse(GetData(dictionary, id));
             }
 
             public bool GetDataAsBool(string dictionary, string id)
@@ -605,7 +607,7 @@ namespace DataManagement
         {
             public class VariableSerializer : Serializers.VariableSerializer
             {
-                public VariableSerializer(string name) : base(name + "Variable") { }
+                public VariableSerializer(string name) : base(name) { }
 
                 public void CheckDataConsistensy(byte[] hash, string validated_value)
                 {
@@ -619,7 +621,7 @@ namespace DataManagement
 
             public class DictionarySerializer : Serializers.DictionarySerializer
             {
-                public DictionarySerializer(string name) : base(name + "Dictionary") { }
+                public DictionarySerializer(string name) : base(name) { }
 
                 public void CheckDataConsistensy(byte[] hash, Dictionary<string, string> validated_elements)
                 {
@@ -641,7 +643,7 @@ namespace DataManagement
 
             public class TableSerializer : Serializers.TableSerializer
             {
-                public TableSerializer(string name) : base(name + "Table") { }
+                public TableSerializer(string name) : base(name) { }
 
                 public void CheckDataConsistensy(byte[] hash, Dictionary<string, string> validated_fields, List<string> validated_rows)
                 {
@@ -664,7 +666,7 @@ namespace DataManagement
 
             public class DictionaryCollectionSerializer : Serializers.DictionaryCollectionSerializer
             {
-                public DictionaryCollectionSerializer(string name) : base(name + "DictionaryCollection") { }
+                public DictionaryCollectionSerializer(string name) : base(name) { }
 
                 public void CheckDataConsistensy(byte[] hash, Dictionary<string, Dictionary<string, string>> validated_dictionaries)
                 {
@@ -1006,7 +1008,7 @@ namespace DataManagement
             }
         }
 
-        [System.Serializable]
+        [Serializable]
         public struct Document
         {
             public string name;
@@ -1017,8 +1019,6 @@ namespace DataManagement
                 return name;
             }
         }
-
-            
     }
 
     namespace Exceptions

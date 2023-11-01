@@ -5,6 +5,11 @@ using DataManagement.Managers;
 
 public class CharacterDataManager : BooleanDictionaryManager
 {
+    protected override void Awake()
+    {
+        Awake("Characters");
+    }
+
     public List<string> GetUnlockedCharacters()
     {
         List<string> characters = Serializer.GetKeys();

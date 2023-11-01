@@ -1,0 +1,3 @@
+# Example of settings
+music_volume: 1
+sound_volume: 1

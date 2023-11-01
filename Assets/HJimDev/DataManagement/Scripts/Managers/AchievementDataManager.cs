@@ -5,6 +5,10 @@ using DataManagement.Managers;
 
 public class AchievementDataManager : BooleanDictionaryManager
 {
+    protected override void Awake()
+    {
+        Awake("Achievements");
+    }
     public bool GetAchievement(string achievementID)
     {
         if (AchievementExists(achievementID)) return Serializer.GetDataAsBool(achievementID);
