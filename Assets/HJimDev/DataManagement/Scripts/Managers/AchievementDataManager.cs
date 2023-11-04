@@ -9,6 +9,12 @@ public class AchievementDataManager : BooleanDictionaryManager
     {
         Awake("Achievements");
     }
+
+    public bool AchievementExists(string achievementID)
+    {
+        return Serializer.DataExists(achievementID);
+    }
+
     public bool GetAchievement(string achievementID)
     {
         if (AchievementExists(achievementID)) return Serializer.GetDataAsBool(achievementID);
@@ -21,8 +27,42 @@ public class AchievementDataManager : BooleanDictionaryManager
         SaveData();
     }
 
-    public bool AchievementExists(string achievementID)
+    public Dictionary<string, bool> GetAchievements()
     {
-        return Serializer.DataExists(achievementID);
+        List<string> achievements = Serializer.GetKeys();
+        Dictionary<string, bool> list = new Dictionary<string, bool>();
+        foreach(string achievement in achievements)
+        {
+            list.Add(achievement, Serializer.GetDataAsBool(achievement));
+        }
+        return list;
+    }
+
+    public List<string> GetUnlockedAchievements()
+    {
+        List<string> achievements = Serializer.GetKeys();
+        List<string> list = new List<string>();
+        foreach (string achievement in achievements)
+        {
+            if(Serializer.GetDataAsBool(achievement))
+            {
+                list.Add(achievement);
+            }
+        }
+        return list;
+    }
+
+    public List<string> GetLockedAchievements()
+    {
+        List<string> achievements = Serializer.GetKeys();
+        List<string> list = new List<string>();
+        foreach (string achievement in achievements)
+        {
+            if (!Serializer.GetDataAsBool(achievement))
+            {
+                list.Add(achievement);
+            }
+        }
+        return list;
     }
 }

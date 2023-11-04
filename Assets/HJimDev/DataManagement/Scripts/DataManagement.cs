@@ -63,7 +63,7 @@ namespace DataManagement
             [Header("Validation File")]
 
             [SerializeField] private TextAsset file;
-            [SerializeField] private string equalKey = ":";
+            private const string equalKey = ":";
 
             protected new Serializers.ValidationExtension.DictionarySerializer Serializer
             {
@@ -147,7 +147,7 @@ namespace DataManagement
             [SerializeField] private TextAsset rows;
             [Tooltip("A file containing a list of fields with default values")]
             [SerializeField] private TextAsset fields;
-            [SerializeField] private string equalKey = ":";
+            private const string equalKey = ":";
 
             protected new Serializers.ValidationExtension.TableSerializer Serializer
             {
@@ -200,7 +200,7 @@ namespace DataManagement
         {
             [Header("Validation File")]
             [SerializeField] private TextAsset[] files;
-            [SerializeField] private string equalKey = ":";
+            private const string equalKey = ":";
 
             protected new Serializers.ValidationExtension.DictionaryCollectionSerializer Serializer
             {

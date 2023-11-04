@@ -14,7 +14,7 @@ public class DataManager : MonoBehaviour
     [Tooltip("List of managers that must reset their content when Reset method is invoked")]
     [SerializeField] private List<BaseManager> onResetExecuteList;
 
-    [Header("Reset")]
+    [Header("Debug Tools")]
     [SerializeField] bool resetAllOnStart;
 
 

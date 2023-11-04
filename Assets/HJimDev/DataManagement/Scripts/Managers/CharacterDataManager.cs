@@ -10,15 +10,9 @@ public class CharacterDataManager : BooleanDictionaryManager
         Awake("Characters");
     }
 
-    public List<string> GetUnlockedCharacters()
+    public bool CharacterExists(string characterID)
     {
-        List<string> characters = Serializer.GetKeys();
-        List<string> unlockedCharacters = new List<string>();
-        foreach(string character in characters)
-        {
-            if (IsCharacterUnlocked(character)) unlockedCharacters.Add(character);
-        }
-        return unlockedCharacters;
+        return Serializer.DataExists(characterID);
     }
 
     public bool IsCharacterUnlocked(string characterID)
@@ -27,14 +21,48 @@ public class CharacterDataManager : BooleanDictionaryManager
         return false;
     }
 
-    public void SetCharacter(string characterID, bool value)
+    public void SetCharacterUnlocked(string characterID, bool value)
     {
-        Serializer.SetData(characterID, value ? "true" : "false");
+        Serializer.SetData(characterID, value);
         SaveData();
     }
 
-    public bool CharacterExists(string characterID)
+    public Dictionary<string, bool> GetCharacters()
     {
-        return Serializer.DataExists(characterID);
+        List<string> characters = Serializer.GetKeys();
+        Dictionary<string, bool> list = new Dictionary<string, bool>();
+        foreach (string character in characters)
+        {
+            list.Add(character, Serializer.GetDataAsBool(character));
+        }
+        return list;
+    }
+
+    public List<string> GetUnlockedCharacters()
+    {
+        List<string> characters = Serializer.GetKeys();
+        List<string> list = new List<string>();
+        foreach (string character in characters)
+        {
+            if (Serializer.GetDataAsBool(character))
+            {
+                list.Add(character);
+            }
+        }
+        return list;
+    }
+
+    public List<string> GetLockedCharacters()
+    {
+        List<string> characters = Serializer.GetKeys();
+        List<string> list = new List<string>();
+        foreach (string character in characters)
+        {
+            if (!Serializer.GetDataAsBool(character))
+            {
+                list.Add(character);
+            }
+        }
+        return list;
     }
 }
