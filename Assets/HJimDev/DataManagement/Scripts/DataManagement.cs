@@ -101,7 +101,7 @@ namespace DataManagement
             }
         }
 
-        public class BooleanDictionaryManager : BaseManager
+        public class DefaultValueDictionaryManager : BaseManager
         {
             [Header("Validation File")]
 
@@ -113,19 +113,19 @@ namespace DataManagement
                 set { base.Serializer = value; }
             }
 
-            protected void Awake(string dataName)
+            protected void Awake(string dataName, string defaultValue)
             {
-                Serializer = new Serializers.ValidationExtension.DictionarySerializer(dataName + "Boolean");
+                Serializer = new Serializers.ValidationExtension.DictionarySerializer(dataName);
                 Serializer.Initialize();
                 byte[] hash = ComputeHash(file.bytes);
                 if (!Serializer.CompareHash(hash))
                 {
-                    Serializer.CheckDataConsistensy(hash, ValidatedElements());
+                    Serializer.CheckDataConsistensy(hash, ValidatedElements(defaultValue));
                     SaveData();
                 }
             }
 
-            protected Dictionary<string, string> ValidatedElements()
+            protected Dictionary<string, string> ValidatedElements(string defaultValue)
             {
                 Dictionary<string, string> validated_elements = new Dictionary<string, string>();
                 string[] lines = file.ToString().Replace('\r', '\n').Split('\n');
@@ -133,10 +133,37 @@ namespace DataManagement
                 foreach (string _line_ in lines)
                 {
                     line = _line_.Trim();
-                    if (line != "" && line[0] != '#') validated_elements.Add(line, "false");
+                    if (line != "" && line[0] != '#') validated_elements.Add(line, defaultValue);
                 }
                 return validated_elements;
             }
+        }
+
+        public class StringDictionaryManager : DefaultValueDictionaryManager
+        {
+            protected void Awake(string dataName) { Awake(dataName + "String", ""); }
+
+            protected void SetData(string id, string value) { Serializer.SetData(id, value); }
+
+            protected string GetData(string id) { return Serializer.GetData(id); }
+        }
+
+        public class IntegerDictionaryManager : DefaultValueDictionaryManager
+        {
+            protected void Awake(string dataName) { Awake(dataName + "Integer", "0"); }
+
+            protected void SetData(string id, int value) { Serializer.SetData(id, value); }
+
+            protected int GetData(string id) { return Serializer.GetDataAsInt(id); }
+        }
+
+        public class BooleanDictionaryManager : DefaultValueDictionaryManager
+        {
+            protected void Awake(string dataName) { Awake(dataName + "Boolean", "false"); }
+
+            protected void SetData(string id, bool value){ Serializer.SetData(id, value); }
+
+            protected bool GetData(string id) { return Serializer.GetDataAsBool(id); }
         }
 
         public class TableManager : BaseManager

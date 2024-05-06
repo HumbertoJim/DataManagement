@@ -3,25 +3,32 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class TestDataManagement : MonoBehaviour
+
+namespace DataManagement
 {
-    [Header("Dependencies")]
-    [SerializeField] UserDataManager userData;
-    [SerializeField] AchievementDataManager achievementData;
-
-    [Header("UI Elements")]
-    [SerializeField] Text label;
-
-    private void Start()
+    namespace Tests
     {
-        string text = "";
-        text += "Username: " + userData.Username + "\n\n";
-        text += "Achievements to unlock\n";
-        text += "----------------------\n";
-        foreach (string achievement in achievementData.GetLockedAchievements())
+        public class TestDataManagement : MonoBehaviour
         {
-            text += "+" + achievement + "\n";
+            [Header("Dependencies")]
+            [SerializeField] UserDataManager userData;
+            [SerializeField] AchievementDataManager achievementData;
+
+            [Header("UI Elements")]
+            [SerializeField] Text label;
+
+            private void Start()
+            {
+                string text = "";
+                text += "Username: " + userData.Username + "\n\n";
+                text += "Achievements to unlock\n";
+                text += "----------------------\n";
+                foreach (string achievement in achievementData.GetLockedAchievements())
+                {
+                    text += "+" + achievement + "\n";
+                }
+                label.text = text;
+            }
         }
-        label.text = text;
     }
 }
