@@ -6,13 +6,13 @@ using UnityEngine.UI;
 
 namespace DataManagement
 {
-    namespace Tests
+    namespace Samples
     {
-        public class TestDataManagement : MonoBehaviour
+        public class DataManagementSample : MonoBehaviour
         {
             [Header("Dependencies")]
-            [SerializeField] UserDataManager userData;
-            [SerializeField] AchievementDataManager achievementData;
+            [SerializeField] UserData userData;
+            [SerializeField] AchievementData achievementData;
 
             [Header("UI Elements")]
             [SerializeField] Text label;
